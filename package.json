@@ -42,7 +42,8 @@
     "test:registry-coverage": "vitest run src/registry-tests/ --coverage",
     "test:installation-verification": "tsx scripts/test-installation-verification.ts",
     "test:installation-ci": "vitest run src/registry-tests/InstallationMethodVerification.ci.test.ts --reporter=verbose --testTimeout=15000",
-    "verify:installation": "tsx scripts/verify-installation-methods.ts"
+    "verify:installation": "tsx scripts/verify-installation-methods.ts",
+    "vercel-build": "npm run build"
   },
   "author": "imbenrabi",
   "license": "Apache-2.0",
@@ -52,9 +53,10 @@
     "@types/axios": "0.14.4",
     "axios": "1.9.0",
     "commander": "^14.0.0",
-    "express": "^5.0.1",
+    "express": "^5.1.0",
     "mcp-trace": "^0.1.0",
     "minimist": "^1.2.8",
+    "serverless-http": "^4.0.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
