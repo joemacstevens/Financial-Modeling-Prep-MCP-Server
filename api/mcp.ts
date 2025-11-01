@@ -4,6 +4,7 @@ import { createMcpHandler } from "mcp-handler";
 import { McpServerFactory } from "../dist/mcp-server-factory/index.js";
 import { ServerModeEnforcer } from "../dist/server-mode-enforcer/index.js";
 import type { SessionConfig } from "../dist/mcp-server-factory/McpServerFactory.js";
+import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 
 ServerModeEnforcer.initialize(process.env, {});
 
@@ -91,7 +92,7 @@ async function writeWebResponseToNode(
   }
 
   if (typeof Readable.fromWeb === "function") {
-    const stream = Readable.fromWeb(body as unknown as ReadableStream);
+    const stream = Readable.fromWeb(body as unknown as NodeReadableStream);
     stream.on("error", (error) => {
       res.destroy(error as Error);
     });
