@@ -1,6 +1,6 @@
 import express from "express";
 import serverless from "serverless-http";
-import { FmpMcpServer } from "../dist/server/FmpMcpServer.js";
+import { FmpMcpServer } from "../../dist/server/FmpMcpServer.js";
 
 // Create an Express app
 const app = express();

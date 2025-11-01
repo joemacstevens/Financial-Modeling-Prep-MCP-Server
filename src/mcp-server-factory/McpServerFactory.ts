@@ -85,7 +85,6 @@ export class McpServerFactory {
     const { config, serverAccessToken } = options;
 
     // Resolve access token and mode first
-    const accessToken = this._resolveAccessToken(serverAccessToken, config);
     const mode = this._resolveSessionMode(config);
     
     console.log(`[McpServerFactory] Creating server in ${mode} mode`);
@@ -93,6 +92,29 @@ export class McpServerFactory {
     // Create the base MCP server with appropriate capabilities
     const isDynamicMode = mode === 'DYNAMIC_TOOL_DISCOVERY';
     const mcpServer = this._createMcpServerInstance(isDynamicMode);
+
+    return this.configureServer(mcpServer, options, mode);
+  }
+
+  /**
+   * Configures an existing MCP server instance with tools, prompts, and mode-aware settings.
+   * This allows reusing the factory logic with servers instantiated by external runtimes (e.g., Vercel).
+   * @param mcpServer - The MCP server instance to configure
+   * @param options - Configuration options (session config, server token)
+   * @param preResolvedMode - Optional pre-resolved server mode to avoid recomputation
+   * @returns Server configuration result
+   */
+  public configureServer(
+    mcpServer: McpServer,
+    options: McpServerOptions,
+    preResolvedMode?: ServerMode
+  ): McpServerCreationResult {
+    const { config, serverAccessToken } = options;
+    const accessToken = this._resolveAccessToken(serverAccessToken, config);
+    const mode = preResolvedMode ?? this._resolveSessionMode(config);
+    const isDynamicMode = mode === 'DYNAMIC_TOOL_DISCOVERY';
+
+    console.log(`[McpServerFactory] Configuring server in ${mode} mode`);
 
     // Register tools based on mode
     const toolManager = this._registerToolsForMode(mcpServer, mode, config, accessToken);
@@ -109,7 +131,7 @@ export class McpServerFactory {
     return {
       mcpServer,
       toolManager,
-      mode
+      mode,
     };
   }
 
@@ -123,15 +145,26 @@ export class McpServerFactory {
    * The serverInfo.capabilities.tools.listChanged field does reflect the correct value.
    */
   private _createMcpServerInstance(isDynamicMode: boolean = false): McpServer {
-    return new McpServer({
+    return new McpServer(this._buildServerInfo(isDynamicMode));
+  }
+
+  /**
+   * Exposes the server info object so other runtimes can instantiate compatible MCP servers.
+   * @param mode - Optional server mode to influence capabilities
+   */
+  public getServerInfo(mode?: ServerMode): ConstructorParameters<typeof McpServer>[0] {
+    const isDynamicMode = mode === 'DYNAMIC_TOOL_DISCOVERY';
+    return this._buildServerInfo(isDynamicMode);
+  }
+
+  private _buildServerInfo(isDynamicMode: boolean = false): ConstructorParameters<typeof McpServer>[0] {
+    return {
       name: "Financial Modeling Prep MCP (Stateful)",
       version: this.version,
       capabilities: {
-        tools: { 
+        tools: {
           listChanged: isDynamicMode // Only enable dynamic tool changes in dynamic mode
         },
-        // Expose prompts capability for human-friendly prompts listing
-        // Keep listChanged false for now; this server does not dynamically change prompts
         prompts: {
           listChanged: false
         }
@@ -146,7 +179,7 @@ export class McpServerFactory {
           },
           FMP_TOOL_SETS: {
             type: "string",
-            title: "Tool Sets (Optional)",  
+            title: "Tool Sets (Optional)",
             description: "Comma-separated list of tool sets to load (e.g., 'search,company,quotes'). If not specified, all tools will be loaded.",
           },
           DYNAMIC_TOOL_DISCOVERY: {
@@ -156,7 +189,7 @@ export class McpServerFactory {
           },
         },
       },
-    });
+    };
   }
 
   /**
